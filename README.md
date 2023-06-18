@@ -1,4 +1,4 @@
-# Crook: a Langugae for Varying Racket Programs
+# Crook: a Language for Varying Racket Programs
 
 Crook is a language for expressing variations over a Racket program.  It expresses variants as an order set of
 changes to a previous program.
