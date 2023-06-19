@@ -1,6 +1,6 @@
 # Crook: a Language for Varying Racket Programs
 
-Crook is a language for expressing variations over a Racket program.  It expresses variants as an order set of
+Crook is a language for expressing variations over a Racket program.  It expresses variants as an ordered set of
 changes to a previous program.
 
 For each variant, a submodule of the program is created that captures the state of
