@@ -5,6 +5,13 @@
 {:> B}
 (require "interp-prim.rkt")
 
+{:> D} ;; type Value = Integer | Boolean
+
+{:> E} ;; type Env = [Listof (List Id Value)]
+
+{:> A D} ;; Expr -> Integer
+{:> D E} ;; Expr -> Value
+{:> E}   ;; Expr Env -> Value
 (define (interp e)
   {:> A E}
   (match e
@@ -26,6 +33,8 @@
   (interp-env e '()))
 
 {:> E}
+;; Expr Env -> Value
+{:> E}
 (define (interp-env e r)
   (match e
     [(Lit d) d]
@@ -39,6 +48,8 @@
      (let ((v (interp-env e1 r)))
        (interp-env e2 (cons (cons x v) r)))]))
 
+{:> E}
+;; Env Id -> Value
 {:> E}
 (define (lookup r x)
   (cdr (assq x r)))

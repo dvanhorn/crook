@@ -3,13 +3,13 @@
 (require "ast.rkt")
 
 ;; S-Expr -> Expr
-(define (parse s)
+(define (parse s {:> D} x)
   (match s    
     {:> A}
     [(? datum?) (Lit s)]
     {:> B}
     [(list (? op1? o) e) (Prim1 o (parse e))]
-    {:> C C}
+    {:> C D}
     [(list 'if (list 'zero? e1) e2 e3)
      (IfZero (parse e1) (parse e2) (parse e3))]
     {:> D}
@@ -19,12 +19,12 @@
 
 ;; Any -> Boolean
 (define (datum? x)
-  {:> A D} (exact-integer? x)
+  {:> A D}
+  (exact-integer? x)
   {:> D}
   (or (exact-integer? x)
       (boolean? x)
-      {:> D1}
-      (char? x)))
+      {:> D} (char? x)))
 
 ;; Any -> Boolean
 (define (op1? x)
