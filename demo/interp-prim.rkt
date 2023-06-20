@@ -1,4 +1,6 @@
 #lang crook
+{:= B C D E}
+
 {:> B}
 (provide interp-prim1)
 

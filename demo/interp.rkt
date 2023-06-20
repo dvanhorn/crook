@@ -1,4 +1,6 @@
 #lang crook
+{:= A B C D E}
+
 (provide interp)
 (require "ast.rkt")
 {:> B}

@@ -4,7 +4,7 @@
   (require syntax/strip-context
            "private/utils.rkt")
 
-  (provide select dropped all select-require variants greatest<=?
+  (provide select dropped all select-require variants #;greatest<=?
            (rename-out [literal-read read]
                        [literal-read-syntax read-syntax]))
 
@@ -32,8 +32,9 @@
   ;; syntax that was not selected
   (define (dropped x s)
     (define (dropped s o)
-      (syntax-case s (:>)
-       [((:> . c) s1 . s2)
+      (syntax-case s (:> :=)
+        ;[((:= . _) . s) (dropped #'s o)]
+        [((:> . c) s1 . s2)
          (if (holds? x (syntax->datum #'c))
              (cons (cons (syntax-position (syntax-car s))
                          (syntax-position #'s1))
@@ -55,6 +56,12 @@
   ;; Syntax -> [Listof Symbol]
   ;; unique list of variants mentioned in s
   (define (all s)
+    (syntax-case s (:=)
+      [((:= . vs) . _)
+       (syntax->datum #'vs)]))
+  
+  #;
+  (define (all s)   
     (define (all s)
       (syntax-case s (:>)
         [((:> x . _) s1 . s2)
@@ -72,6 +79,7 @@
                                    (syntax->list #'(f ...)))])
          (syntax/loc fs (f ...)))]))
 
+  #;
   (define (get-configs s)
     (dynamic-require (list 'submod (syntax->datum s) 'configs) 'configs))
 
@@ -79,8 +87,8 @@
     (syntax-case* f (require) (λ (x y) (eq? (syntax->datum x) (syntax->datum y)))
       [(require m)
        (if (string? (syntax->datum #'m))
-           (with-syntax ([x-stx (greatest<=? x (get-configs #'m))])
-             (syntax/loc f (require (submod m x-stx))))
+           (with-syntax ([x x])
+             (syntax/loc #'f (require (submod m x))))
            (syntax/loc #'m (require m)))]
       [x #'x]))
 
@@ -90,9 +98,10 @@
       [(list y z) (and (symbol>=? x y)
                        (symbol<? x z))]))
 
+  #;
   (define (greatest<=? x ys)
     (greatest<=?/acc x #f ys))
-
+  #;
   (define (greatest<=?/acc x m ys)
     (match ys
       ['() m]
@@ -134,7 +143,8 @@
                                             (λ (in)
                                               (port->string/skips
                                                in
-                                               (dropped x s))))))
+                                               (cons (cons 1 (+ 2 (syntax-span (syntax-car s))))
+                                                     (dropped x (syntax-cdr s))))))))
 
   (require racket/syntax)
 
@@ -147,7 +157,7 @@
          (with-syntax
              ([mods (map (λ (m)
                            (with-syntax*
-                               ([b (select m #'stxs)]
+                               ([b (select m (syntax-cdr #'stxs))]
                                 [src (syntax-format m #'stxs orig)]
                                 [orig (string-append "#lang crook" orig)]
                                 [c (select-require m #'b)]

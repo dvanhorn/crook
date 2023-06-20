@@ -16,14 +16,18 @@
     (make-directory dst))
 
   (for ([f fs])
-    (with-output-to-file (build-path dst f)
-      (λ ()
-        (dynamic-require (list 'submod
-                               (path->string (build-path src f))
-                               (string->symbol x)
-                               'source)
-                         #f))
-      #:exists 'replace)))
+    (when (member (string->symbol x) (dynamic-require (list 'submod
+                                                            (path->string (build-path src f))
+                                                            'configs)
+                                                      'configs))
+      (with-output-to-file (build-path dst f)
+        (λ ()
+          (dynamic-require (list 'submod
+                                 (path->string (build-path src f))
+                                 (string->symbol x)
+                                 'source)
+                           #f))
+        #:exists 'replace))))
 
 ;; Path -> Boolean
 (define (rkt-extension? p)

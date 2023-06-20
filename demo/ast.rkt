@@ -1,4 +1,5 @@
 #lang crook
+{:= A B C D E}
 (provide {:> A} Lit {:> B} Prim1 {:> C D} IfZero {:> D} If {:> E} Var {:> E} Let)
 
 {:> A} ;; type Expr = (Lit Datum)

@@ -1,9 +1,10 @@
 #lang crook
+{:= A B C D E}
 (provide parse)
 (require "ast.rkt")
 
 ;; S-Expr -> Expr
-(define (parse s {:> D} x)
+(define (parse s)
   (match s    
     {:> A}
     [(? datum?) (Lit s)]

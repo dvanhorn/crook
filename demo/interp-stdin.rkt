@@ -1,19 +1,16 @@
 #lang crook
-(:> A A)
-(provide main)
-(:> B B)
-(provide main)
-(:> C C)
-(provide main)
-(:> D D)
-(provide main)
-(:> D1 D1)
-(provide main)
-(:> E E)
+{:= A B C D E}
 (provide main)
 
 (require "parse.rkt")
 (require "interp.rkt")
+
+(define (f x)
+  2
+  {:> A C}
+  1
+  {:> C}
+  2)
 
 ;; -> Void
 ;; Parse and interpret contents of stdin,
