@@ -17,13 +17,14 @@
 
   (for ([f fs])
     (when (member (string->symbol x) (dynamic-require (list 'submod
-                                                            (path->string (build-path src f))
+                                                            (list 'file (path->string (build-path src f)))
                                                             'configs)
                                                       'configs))
+      (printf "creating ~a.\n" f)
       (with-output-to-file (build-path dst f)
         (λ ()
           (dynamic-require (list 'submod
-                                 (path->string (build-path src f))
+                                 (list 'file (path->string (build-path src f)))
                                  (string->symbol x)
                                  'source)
                            #f))
