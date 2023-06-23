@@ -171,11 +171,14 @@
                                      (displayln src))
                                    (module original racket
                                      (displayln orig))
+                                   (module comment racket
+                                     (provide code:comment)
+                                     (define-syntax-rule (code:comment . _)
+                                       (void)))
                                    #; (module source-debug racket
                                         (displayln src-debug))
                                    (module+ test)
-                                   (define-syntax-rule (code:comment . _)
-                                     (void))
+                                   (require (submod "." comment))
                                    . c))))
                          ms)]
               [ms ms])
