@@ -134,17 +134,17 @@
     (let-values ([(orig stxs) (read-syntax-all src in)])
       (variants stxs orig)))
 
-  ;; Symbol Syntax String -> String
+  ;; Symbol Syntax String -> Bytes
   ;; Print variant of s as a string
   ;; Given both syntax and textual representation of program
   (define (syntax-format x s orig)
-    (string-append "#lang racket"
-                    (call-with-input-string orig
-                                            (λ (in)
-                                              (port->string/skips
-                                               in
-                                               (cons (cons 1 (+ 2 (syntax-span (syntax-car s))))
-                                                     (dropped x (syntax-cdr s))))))))
+    (bytes-append #"#lang racket"
+                  (call-with-input-string orig
+                                          (λ (in)
+                                            (port->bytes/skips
+                                             in
+                                             (cons (cons 1 (+ 2 (syntax-span (syntax-car s))))
+                                                   (dropped x (syntax-cdr s))))))))
 
   (require racket/syntax)
 

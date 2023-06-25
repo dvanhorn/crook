@@ -1,20 +1,20 @@
 #lang racket
-(provide port->string/skips
+(provide port->bytes/skips
          syntax-car
          syntax-cdr
          symbol>=?
          symbol<?)
 
-;; Port [Listof (Pairof Nat Nat)] -> String
-;; like port->string, but skips over given position intervals
+;; Port [Listof (Pairof Nat Nat)] -> Bytes
+;; like port->bytes, but skips over given position intervals
 ;; intervals should be in ascending order
-(define (port->string/skips in skips)
+(define (port->bytes/skips in skips)
   (define (loop skips)
     (match skips
-      ['() (port->string in)]
+      ['() (port->bytes in)]
       [(cons (cons start stop) skips)
-       (string-append
-        (read-string (- start (file-position in)) in)
+       (bytes-append
+        (read-bytes (- start (file-position in)) in)
         (begin
           (file-position in stop)
           (loop skips)))]))
@@ -24,7 +24,7 @@
   (require rackunit)
   (define (ps s skips)
     (call-with-input-string s
-      (λ (in) (port->string/skips in skips))))
+      (λ (in) (port->bytes/skips in skips))))
 
   (check-equal? (ps "abcd" '()) "abcd")
   (check-equal? (ps "abcd" '((0 . 0))) "abcd")
