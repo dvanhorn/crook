@@ -84,11 +84,17 @@
     (dynamic-require (list 'submod (syntax->datum s) 'configs) 'configs))
 
   (define (select-req-file x f)
-    (syntax-case* f (require) (λ (x y) (eq? (syntax->datum x) (syntax->datum y)))
+    (syntax-case* f (require provide all-from-out)
+        (λ (x y) (eq? (syntax->datum x) (syntax->datum y)))
       [(require m)
        (if (string? (syntax->datum #'m))
            (with-syntax ([x x])
              (syntax/loc #'f (require (submod m x))))
+           (syntax/loc #'m (require m)))]
+      [(provide (all-from-out m))
+       (if (string? (syntax->datum #'m))
+           (with-syntax ([x x])
+             (syntax/loc #'f (provide (all-from-out (submod m x)))))
            (syntax/loc #'m (require m)))]
       [x #'x]))
 
