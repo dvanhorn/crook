@@ -9,7 +9,7 @@
                        [literal-read-syntax read-syntax]))
 
   (require (only-in scribble/comment-reader
-                    read-syntax))
+                    [read-syntax read-syntax/comment]))
 
   ;; Symbol Syntax -> Syntax
   (define (select x s)
@@ -30,26 +30,107 @@
   ;; Symbol Syntax -> [Listof Skip]
   ;; Like select, but produces a skip list for removing
   ;; syntax that was not selected
+
   (define (dropped x s)
+
+    #;
+    (define (D s end-of-kept)
+      (printf "D: ~a\n\teok: ~a\n" s end-of-kept)
+      (syntax-case s (:> :=)
+        [((:> . c) s1 s2 ...)
+         (if (holds? x (syntax->datum #'c))
+             (begin (printf "holds\n")
+                    (cons (cons (syntax-position (syntax-car s))
+                                (syntax-position #'s1))
+                          ;; Need to recur on s1 too!
+                          (D #'(s2 ...)
+                             (+ (syntax-position #'s1)
+                                (syntax-span #'s1)))))
+             (syntax-case #'(s2 ...) ()
+
+               [()
+                (begin (printf "drop end\n")
+                       (list (cons end-of-kept (+ (syntax-position #'s1)
+                                                  (syntax-span #'s1)))))]
+               [_
+                (begin (printf "drop cont\n")
+                       (cons (cons (syntax-position (syntax-car s))
+                                   (+ (syntax-position #'s1)
+                                      (syntax-span #'s1)))
+                             (D #'(s2 ...) end-of-kept)))]))]
+
+        [(s1 . s2)
+         (begin
+           (printf "pair: s1: ~a, s2: ~a\n" #'s1 #'s2)
+           (append (D #'s1 end-of-kept)
+                   (D #'s2 (+ (syntax-position #'s1)
+                              (syntax-span #'s1)))))]
+        [_ (begin (printf "end\n")
+                  '())]))
+
+    #;
+    (map (λ (s) (cons (- (car s) 1) (- (cdr s) 1)))
+         (D s 0))
+
+    #;
+    (define (keeping s)
+      (syntax-case s (:> :=)
+        [((:> . c) s1 . s2)
+         (if (holds? x (syntax->datum #'c))
+             (cons (cons (syntax-position (syntax-car s))
+                         (syntax-position #'s1))
+                   (append (keeping #'s1)
+                           (keeping #'s2)))
+
+             (dropping (syntax-position (syntax-car s)) #'s2))]
+        [(s1 . s2)
+         (append (keeping #'s1) (keeping #'s2))]
+        [_ '()]))
+
+    #;
+    (define (dropping from s)
+      (syntax-case s (:> :=)
+        [((:> . c) . sn)
+         (if (holds? x (syntax->datum #'c))
+             (cons (cons from (syntax-position (syntax-car s)))
+                   (keeping s))
+             (dropping from #'sn))]
+        [(s1 . s2)
+         (dropping from #'s2)]
+        [_ (list (cons from (+ (sub1 (syntax-position s)) (syntax-span s))))]))
+
+    #;
+    (map (λ (s) (cons (- (car s) 2) (- (cdr s) 2)))
+         (keeping s))
+
+    ;; Syntax Natural -> [Listof Skip]
     (define (dropped s o)
       (syntax-case s (:> :=)
         ;[((:= . _) . s) (dropped #'s o)]
         [((:> . c) s1 . s2)
          (if (holds? x (syntax->datum #'c))
+             ;; Keeping s1, so:
+             ;; Skip from the start of the (:> . _) spec to beginning of s1
              (cons (cons (syntax-position (syntax-car s))
                          (syntax-position #'s1))
                    (append (dropped #'s1 o)
                            (dropped #'s2 (+ (syntax-position #'s1)
                                             (syntax-span #'s1)))))
-             (cons (cons o (+ (syntax-position #'s1)
-                              (syntax-span #'s1)))
-                   (dropped #'s2 (+ (syntax-position #'s1)
+             ;; Skipping s1, so:
+             ;; Skip from o to the end of s1
+             (cons (cons o #;(syntax-position (syntax-car s))
+                         #;(syntax-position #'s2)
+                         (+ (syntax-position #'s1)
+                            (syntax-span #'s1)))
+                   (dropped #'s2 #;(syntax-position #'s2)
+                            (+ (syntax-position #'s1)
                                     (syntax-span #'s1)))))]
         [(s1 . s2)
          (append (dropped #'s1 o)
                  (dropped #'s2 (+ (syntax-position #'s1)
                                   (syntax-span #'s1))))]
         [_ '()]))
+
     (map (λ (s) (cons (- (car s) 2) (- (cdr s) 2)))
          (dropped s 0)))
 
@@ -59,9 +140,9 @@
     (syntax-case s (:=)
       [((:= . vs) . _)
        (syntax->datum #'vs)]))
-  
+
   #;
-  (define (all s)   
+  (define (all s)
     (define (all s)
       (syntax-case s (:>)
         [((:> x . _) s1 . s2)
@@ -134,7 +215,7 @@
              ;; wrap in parens and do single read-syntax
              (string-append "[" content "]")
              (λ (in)
-               (read-syntax src in)))))
+               (read-syntax/comment src in)))))
 
   (define (literal-read-syntax src in)
     (let-values ([(orig stxs) (read-syntax-all src in)])
