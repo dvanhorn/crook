@@ -31,22 +31,40 @@
   ;; Like select, but produces a skip list for removing
   ;; syntax that was not selected
   (define (dropped x s)
+    ;; o is the position of the last accepted thing,
+    ;; which is where you want to start chopping from
     (define (dropped s o)
       (syntax-case s (:> :=)
         ;[((:= . _) . s) (dropped #'s o)]
         [((:> . c) s1 . s2)
          (if (holds? x (syntax->datum #'c))
-             (cons (cons (syntax-position (syntax-car s))
-                         (syntax-position #'s1))
-                   (append (dropped #'s1 o)
-                           (dropped #'s2 (+ (syntax-position #'s1)
-                                            (syntax-span #'s1)))))
-             (cons (cons o (+ (syntax-position #'s1)
-                              (syntax-span #'s1)))
-                   (dropped #'s2 (+ (syntax-position #'s1)
-                                    (syntax-span #'s1)))))]
+             (syntax-case #'s1 (code:comment)
+               [(code:comment _)
+                (cons (cons (syntax-position (syntax-car s))
+                            (syntax-position #'s1))
+                      (append (dropped #'s1 (syntax-position #'s1) #;o)
+                              (dropped #'s2 (sub1 (+ (syntax-position #'s1)
+                                                     (syntax-span #'s1))))))]
+                [_
+                 (cons (cons (syntax-position (syntax-car s))
+                             (syntax-position #'s1))
+                       (append (dropped #'s1 (syntax-position #'s1) #;o)
+                               (dropped #'s2 (+ (syntax-position #'s1)
+                                                (syntax-span #'s1)))))])
+             (syntax-case #'s1 (code:comment)
+               ;; adjust the span of a comment to remove the newline at the end
+               [(code:comment _)
+                (cons (cons o (sub1 (+ (syntax-position #'s1)
+                                       (syntax-span #'s1))))
+                      (dropped #'s2 (sub1 (+ (syntax-position #'s1)
+                                             (syntax-span #'s1)))))]
+               [_
+                (cons (cons o (+ (syntax-position #'s1)
+                                 (syntax-span #'s1)))
+                      (dropped #'s2 (+ (syntax-position #'s1)
+                                       (syntax-span #'s1))))]))]
         [(s1 . s2)
-         (append (dropped #'s1 o)
+         (append (dropped #'s1 (syntax-position #'s1) #;o)
                  (dropped #'s2 (+ (syntax-position #'s1)
                                   (syntax-span #'s1))))]
         [_ '()]))
@@ -59,9 +77,9 @@
     (syntax-case s (:=)
       [((:= . vs) . _)
        (syntax->datum #'vs)]))
-  
+
   #;
-  (define (all s)   
+  (define (all s)
     (define (all s)
       (syntax-case s (:>)
         [((:> x . _) s1 . s2)
