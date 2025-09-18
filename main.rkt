@@ -118,9 +118,12 @@
 
   (define (holds? x c)
     (match c
+      [(list)     #f]
       [(list y)   (symbol>=? x y)]
-      [(list y z) (and (symbol>=? x y)
-                       (symbol<? x z))]))
+      [(list-rest y z r)
+       (or (and (symbol>=? x y)
+                (symbol<? x z))
+           (holds? x r))]))
 
   #;
   (define (greatest<=? x ys)
